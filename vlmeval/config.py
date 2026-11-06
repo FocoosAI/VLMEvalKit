@@ -1658,6 +1658,31 @@ qwen3_5_series = {
         presence_penalty=1.5,
         max_new_tokens=32768,
     ),
+    # Qwen3.5-4B: thinking uses the 27B recipe above; NoThinking uses the model card's
+    # instruct (non-thinking) sampling for general tasks.
+    "Qwen3.5-4B": partial(
+        vlm.Qwen3VLChat,
+        model_path="Qwen/Qwen3.5-4B",
+        use_custom_prompt=False,
+        use_vllm=True,
+        temperature=1.0,
+        top_p=0.95,
+        top_k=20,
+        presence_penalty=1.5,
+        max_new_tokens=32768,
+    ),
+    "Qwen3.5-4B-NoThinking": partial(
+        vlm.Qwen3VLChat,
+        model_path="Qwen/Qwen3.5-4B",
+        use_custom_prompt=False,
+        use_vllm=True,
+        enable_thinking=False,
+        temperature=0.7,
+        top_p=0.8,
+        top_k=20,
+        presence_penalty=1.5,
+        max_new_tokens=1024,
+    ),
 }
 
 sail_series = {

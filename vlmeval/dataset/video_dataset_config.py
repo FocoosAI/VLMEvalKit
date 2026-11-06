@@ -79,6 +79,12 @@ mvbench_dataset = {
     'MVBench_MP4_1fps': _video_spec(MVBench_MP4, dataset='MVBench_MP4', fps=1.0),
 }
 
+motionbench_dataset = {
+    # Video LLMs get the clip file and sample it themselves (Qwen3.5: 2 fps).
+    'MotionBench': _video_spec(MotionBench, dataset='MotionBench'),
+    'MotionBench_1fps': _video_spec(MotionBench, dataset='MotionBench', fps=1.0),
+}
+
 tamperbench_dataset = {
     'MVTamperBench_8frame': _video_spec(MVTamperBench, dataset='MVTamperBench', nframe=8),
     'MVTamperBenchStart_8frame': _video_spec(MVTamperBench, dataset='MVTamperBenchStart', nframe=8),
@@ -483,7 +489,7 @@ dataset_groups = [
     megabench_dataset, qbench_video_dataset, moviechat1k_dataset, vdc_dataset, video_holmes_dataset, vcrbench_dataset,
     cg_av_counting_dataset, video_mmlu_dataset, egoexobench_dataset, dream_1k_dataset, video_tt_dataset,
     video_vsi_dataset, mvu_eval_dataset, omtg_dataset, v2pbench_dataset, av_speakerbench_dataset,
-    favor_bench_dataset, timelens_bench_dataset, vue_tr_dataset
+    favor_bench_dataset, timelens_bench_dataset, vue_tr_dataset, motionbench_dataset
 ]
 
 # add by EASI team

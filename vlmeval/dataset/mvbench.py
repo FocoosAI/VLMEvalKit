@@ -94,7 +94,7 @@ Based on your observations, select the best option that accurately addresses the
             if not os.path.exists(data_file):
                 return False
 
-            if md5(data_file) != self.MD5:
+            if md5(data_file) != self.MD5 and not os.environ.get('MVBENCH_ROOT'):
                 return False
 
             data = load(data_file)
@@ -106,7 +106,10 @@ Based on your observations, select the best option that accurately addresses the
         if modelscope_flag_set():
             repo_id = 'modelscope/MVBench'
 
-        cache_path = get_cache_path(repo_id, branch='main')
+        # MVBENCH_ROOT: a local copy of the HF repo (offline nodes). Its TSV may omit
+        # questions whose videos are missing (the NTU RGB+D clips), so the MD5 is not enforced.
+        local_root = os.environ.get('MVBENCH_ROOT')
+        cache_path = local_root or get_cache_path(repo_id, branch='main')
         if cache_path is not None and check_integrity(cache_path):
             dataset_path = cache_path
         else:
@@ -127,6 +130,7 @@ Based on your observations, select the best option that accurately addresses the
                     return
                 json_data_dir = os.path.join(pth, 'json')
                 self.data_list = []
+                missing = {}
                 for k, v in self.type_data_list.items():
                     with open(os.path.join(json_data_dir, v[0]), 'r') as f:
                         json_data = json.load(f)
@@ -144,6 +148,8 @@ Based on your observations, select the best option that accurately addresses the
                                 'answer': data['answer'],
                                 'candidates': data['candidates']
                             })
+                        elif local_root:
+                            missing[k] = missing.get(k, 0) + 1
                         else:
                             print(
                                 'NTURGB-D zip file is removed according to MVBench, you can view it at '
@@ -152,6 +158,8 @@ Based on your observations, select the best option that accurately addresses the
                             raise Exception(
                                 f"{os.path.join(v[1].replace('your_data_path', 'video'), data['video'])} does not exist"
                             )
+                for k, n in missing.items():
+                    warnings.warn(f'MVBench: skipped {n} questions of task {k!r}: video file missing')
 
                 data_df = pd.DataFrame(self.data_list)
                 data_df = data_df.assign(index=range(len(data_df)))
@@ -178,7 +186,9 @@ Based on your observations, select the best option that accurately addresses the
                                     except Exception as e:
                                         print(f"Error moving {item_path} to {target_path}: {e}")
 
-            if modelscope_flag_set():
+            if local_root:
+                dataset_path = local_root
+            elif modelscope_flag_set():
                 from modelscope import dataset_snapshot_download
                 dataset_path = dataset_snapshot_download(dataset_id=repo_id, revision='master')
             else:

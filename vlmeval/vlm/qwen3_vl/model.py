@@ -60,9 +60,12 @@ class Qwen3VLChat(Qwen3VLPromptMixin, BaseModel):
         post_process: bool = False,
         verbose: bool = False,
         use_audio_in_video: bool = True,
+        enable_thinking: bool | None = None,
         **kwargs,
     ) -> None:
         super().__init__(use_custom_prompt=use_custom_prompt)
+        # None keeps the chat template's default; Qwen3.5 thinks by default.
+        self.chat_template_kwargs = {} if enable_thinking is None else {'enable_thinking': enable_thinking}
         self.min_pixels = min_pixels
         self.max_pixels = max_pixels
         self.total_pixels = total_pixels
@@ -259,7 +262,9 @@ class Qwen3VLChat(Qwen3VLPromptMixin, BaseModel):
                 use_audio_in_video=self.use_audio_in_video,
             )
         else:
-            text = self.processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            text = self.processor.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True, **self.chat_template_kwargs
+            )
             images, videos, video_kwargs = process_vision_info(
                 messages,
                 image_patch_size=16,
@@ -364,7 +369,9 @@ class Qwen3VLChat(Qwen3VLPromptMixin, BaseModel):
         if self.verbose:
             print(f'\033[31m{messages}\033[0m')
 
-        text = self.processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        text = self.processor.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True, **self.chat_template_kwargs
+        )
         if is_omni:
             audios, image_inputs, video_inputs = process_mm_info(messages, use_audio_in_video=self.use_audio_in_video)
         else:
@@ -429,6 +436,8 @@ class Qwen3VLChat(Qwen3VLPromptMixin, BaseModel):
 
     def generate_inner(self, message, dataset=None):
         if self.use_vllm:
-            return self.generate_inner_vllm(message, dataset=dataset)
+            response = self.generate_inner_vllm(message, dataset=dataset)
         else:
-            return self.generate_inner_transformers(message, dataset=dataset)
+            response = self.generate_inner_transformers(message, dataset=dataset)
+        # Score only the final answer: drop a thinking block if the model emitted one.
+        return response.split('</think>')[-1].strip()

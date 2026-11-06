@@ -109,6 +109,7 @@ from .molrecbench_wild import MolRecBenchWildDataset
 from .moviechat1k import MovieChat1k
 from .mrarebench import MRareBenchDiagnosis, MRareBenchEvidenceVerif
 from .mssbench import MSSBenchDataset
+from .motionbench import MotionBench
 from .mvbench import MVBench, MVBench_MP4
 from .mvh_bench import MVHBench
 from .mvu_eval import MVUEval
@@ -357,7 +358,7 @@ IMAGE_DATASET += [
 ]
 
 VIDEO_DATASET = [
-    MMBenchVideo, VideoMME, MVBench, MVBench_MP4, MVTamperBench,
+    MMBenchVideo, VideoMME, MVBench, MVBench_MP4, MVTamperBench, MotionBench,
     LongVideoBench, WorldSense, VDC, MovieChat1k, MEGABench,
     MLVU, MLVU_MCQ, MLVU_OpenEnded,
     TempCompass, TempCompass_MCQ, TempCompass_Captioning, TempCompass_YorN,
