@@ -110,6 +110,7 @@ from .moviechat1k import MovieChat1k
 from .mrarebench import MRareBenchDiagnosis, MRareBenchEvidenceVerif
 from .mssbench import MSSBenchDataset
 from .motionbench import MotionBench
+from .haic import HAIC
 from .mvbench import MVBench, MVBench_MP4
 from .mvh_bench import MVHBench
 from .mvu_eval import MVUEval
@@ -358,7 +359,7 @@ IMAGE_DATASET += [
 ]
 
 VIDEO_DATASET = [
-    MMBenchVideo, VideoMME, MVBench, MVBench_MP4, MVTamperBench, MotionBench,
+    MMBenchVideo, VideoMME, MVBench, MVBench_MP4, MVTamperBench, MotionBench, HAIC,
     LongVideoBench, WorldSense, VDC, MovieChat1k, MEGABench,
     MLVU, MLVU_MCQ, MLVU_OpenEnded,
     TempCompass, TempCompass_MCQ, TempCompass_Captioning, TempCompass_YorN,

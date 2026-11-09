@@ -14,11 +14,12 @@ import zlib
 
 import pandas as pd
 
-from vlmeval.dataset import MotionBench, MVBench
+from vlmeval.dataset import HAIC, MotionBench, MVBench
 
 DATASETS = {
     'MVBench_64frame': lambda: MVBench(dataset='MVBench', nframe=64),
     'MotionBench': lambda: MotionBench(dataset='MotionBench'),
+    'HAIC': lambda: HAIC(dataset='HAIC'),
 }
 
 

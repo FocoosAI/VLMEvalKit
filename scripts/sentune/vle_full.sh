@@ -17,7 +17,7 @@ N=$((4 / G))
 ENVS=(--env VLLM_NO_USAGE_STATS=1 --env HF_HOME=/leonardo_work/AIFAC_F02_1463/.cache/huggingface --env HF_HUB_OFFLINE=1
       --env TRANSFORMERS_OFFLINE=1 --env VLLM_CACHE_ROOT=/leonardo_work/AIFAC_F02_1463/.cache/vllm
       --env VLLM_WORKER_MULTIPROC_METHOD=spawn --env LMUData=$R/LMUData
-      --env MVBENCH_ROOT=$D/mvbench --env MOTIONBENCH_ROOT=$D/motionbench)
+      --env MVBENCH_ROOT=$D/mvbench --env MOTIONBENCH_ROOT=$D/motionbench --env HAIC_ROOT=$D/haic)
 # The container's CUDA forward-compat libs must come first (Leonardo driver is CUDA 12.2).
 cat > $R/_inner.sh <<'INNER'
 COMPAT=$(ls -d /usr/local/cuda-*/compat 2>/dev/null | sort -V | tail -1)
