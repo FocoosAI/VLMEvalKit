@@ -1658,8 +1658,7 @@ qwen3_5_series = {
         presence_penalty=1.5,
         max_new_tokens=32768,
     ),
-    # Qwen3.5-4B: thinking uses the 27B recipe above; NoThinking uses the model card's
-    # instruct (non-thinking) sampling for general tasks.
+    # Qwen3.5-4B thinking uses the 27B recipe above.
     "Qwen3.5-4B": partial(
         vlm.Qwen3VLChat,
         model_path="Qwen/Qwen3.5-4B",
@@ -1671,9 +1670,12 @@ qwen3_5_series = {
         presence_penalty=1.5,
         max_new_tokens=32768,
     ),
-    "Qwen3.5-4B-NoThinking": partial(
+}
+# NoThinking: the model card's instruct (non-thinking) sampling for general tasks.
+qwen3_5_series.update({
+    f"Qwen3.5-{size}-NoThinking": partial(
         vlm.Qwen3VLChat,
-        model_path="Qwen/Qwen3.5-4B",
+        model_path=f"Qwen/Qwen3.5-{size}",
         use_custom_prompt=False,
         use_vllm=True,
         enable_thinking=False,
@@ -1682,8 +1684,12 @@ qwen3_5_series = {
         top_k=20,
         presence_penalty=1.5,
         max_new_tokens=1024,
-    ),
-}
+    )
+    for size in ["0.8B", "2B", "4B", "9B", "27B"]
+})
+# W4A16 AWQ (compressed-tensors, group 32), language model only; same sampling as bf16.
+qwen3_5_series["Qwen3.5-4B-AWQ-NoThinking"] = partial(
+    qwen3_5_series["Qwen3.5-4B-NoThinking"], model_path="cyankiwi/Qwen3.5-4B-AWQ-4bit")
 
 sail_series = {
     "SAIL-VL-2B": partial(vlm.SailVL, model_path="BytedanceDouyinContent/SAIL-VL-2B"),
@@ -2462,6 +2468,8 @@ lfm2vl_series = {
         vlm.LFM2VL, model_path="LiquidAI/LFM2.5-VL-1.6B", use_custom_prompt=False,
     ),
     "LFM2.5-VL-3B": partial(vlm.LFM2VL, model_path="LiquidAI/LFM2.5-VL-3B"),
+    "LFM3-VL-2B": partial(vlm.LFM3VL, model_path="LiquidAI/LFM3-VL-2B"),
+    "LFM3-VL-2B-NoThinking": partial(vlm.LFM3VL, model_path="LiquidAI/LFM3-VL-2B", enable_thinking=False),
 }
 
 covt_series = {

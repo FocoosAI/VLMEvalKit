@@ -34,7 +34,7 @@ from .janus import Janus
 from .keye_vlm import KeyeChat
 from .kimi_vl import KimiVL
 from .kosmos import Kosmos2
-from .liquid import LFM2VL
+from .liquid import LFM2VL, LFM3VL
 from .llama4 import llama4
 from .llama_vision import llama_vision
 from .llava import (LLaVA, LLaVA_Next, LLaVA_Next2, LLaVA_OneVision, LLaVA_OneVision_1_5,

@@ -306,3 +306,44 @@ class LFM2VL(BaseModel):
 
     def chat_inner(self, message, dataset=None):
         return self.generate_inner(message, dataset)
+
+
+class LFM3VL(BaseModel):
+    """LFM3-VL (remote code, transformers backend). Takes video natively; the checkpoint's own
+    generation_config holds the recommended sampling, and the processor_config the frame policy."""
+
+    INTERLEAVE = True
+    VIDEO_LLM = True
+
+    def __init__(self, model_path, enable_thinking=True, **kwargs):
+        super().__init__()
+        from transformers import AutoModelForImageTextToText, AutoProcessor
+
+        self.processor = AutoProcessor.from_pretrained(model_path, trust_remote_code=True)
+        self.model = AutoModelForImageTextToText.from_pretrained(
+            model_path, dtype=torch.bfloat16, trust_remote_code=True
+        ).cuda().eval()
+        self.enable_thinking = enable_thinking
+        self.kwargs = {'max_new_tokens': 16384 if enable_thinking else 1024, **kwargs}
+
+    @staticmethod
+    def _item(x):
+        if x['type'] == 'text':
+            return {'type': 'text', 'text': x['value']}
+        if x['type'] in ('image', 'video'):
+            return {'type': x['type'], 'path': x['value']}
+        raise ValueError(f'Unsupported message item type: {x["type"]!r}')
+
+    def generate_inner(self, message, dataset=None):
+        # Like Qwen3VLChat, every non-system item (incl. an assistant-role prefix) goes in the user turn.
+        system = [self._item(x) for x in message if x.get('role') == 'system']
+        user = [self._item(x) for x in message if x.get('role') != 'system']
+        chat = ([{'role': 'system', 'content': system}] if system else []) + [{'role': 'user', 'content': user}]
+        inputs = self.processor.apply_chat_template(
+            chat, add_generation_prompt=True, tokenize=True, return_dict=True, return_tensors='pt',
+            enable_thinking=self.enable_thinking,
+        ).to(self.model.device)
+        with torch.inference_mode():
+            out = self.model.generate(**inputs, **self.kwargs)
+        text = self.processor.batch_decode(out[:, inputs['input_ids'].shape[1]:], skip_special_tokens=False)[0]
+        return re.sub(r'<\|[^|]*\|>', '', text.split('</think>')[-1]).strip()
