@@ -64,7 +64,9 @@ class HAIC(VideoBaseDataset):
             warnings.warn(f'HAIC: dropped {missing} test questions whose clip is not on disk')
         df = pd.DataFrame(rows)
         df['index'] = range(len(df))
-        df.to_csv(data_file, sep='\t', index=False)
+        tmp = f'{data_file}.{os.getpid()}.tmp'   # shards build concurrently: write, then rename
+        df.to_csv(tmp, sep='\t', index=False)
+        os.replace(tmp, data_file)
 
     def build_prompt(self, line, video_llm):
         if isinstance(line, int):
@@ -94,4 +96,56 @@ class HAIC(VideoBaseDataset):
         rating['n'] = int(len(data))
         rating['unparsed'] = int((data['pred'] == 'Z').sum())
         dump(rating, rating_file)
+        return rating
+
+
+class HAIC_Caption(HAIC):
+    """HAICBench caption setting, step 1: one people-centric caption per test video (412 rows).
+
+    The prompt is the paper's "Prompt for MLLM Caption" (Figure 11). Step 2 (a text-only LLM
+    answering the 2,000 test questions from each caption) is scripts/sentune/haic/haic_caption_judge.py;
+    evaluate() here only reports caption counts and lengths.
+    """
+
+    TYPE = 'Video-VQA'
+    PROMPT = ('Please provide a description of people in the video, your description should describe their '
+              'attributes and detailed actions in chronological order. Do not mention anything unrelated to people.')
+
+    def __init__(self, dataset='HAIC_Caption', nframe=0, fps=-1):
+        super().__init__(dataset=dataset, nframe=nframe, fps=fps)
+
+    @classmethod
+    def supported_datasets(cls):
+        return ['HAIC_Caption']
+
+    @staticmethod
+    def _build_tsv(root, data_file):
+        mcq = f'{data_file}.{os.getpid()}.mcq'
+        HAIC._build_tsv(root, mcq)
+        df = pd.read_csv(mcq, sep='\t')
+        os.remove(mcq)
+        df = df.drop_duplicates('video')[['video']].reset_index(drop=True)
+        df['question'] = HAIC_Caption.PROMPT
+        df['index'] = range(len(df))
+        tmp = f'{data_file}.{os.getpid()}.tmp'
+        df.to_csv(tmp, sep='\t', index=False)
+        os.replace(tmp, data_file)
+
+    def build_prompt(self, line, video_llm):
+        if isinstance(line, int):
+            line = self.data.iloc[line]
+        message = []
+        if video_llm or not self.split_frame:
+            message.append(dict(type='video', value=osp.join(self.data_root, line['video'] + '.mp4')))
+        else:
+            message += [dict(type='image', value=p) for p in self.save_video_frames(line['video'])]
+        message.append(dict(type='text', value=self.PROMPT))
+        return message
+
+    def evaluate(self, eval_file, **judge_kwargs):
+        data = load(eval_file)
+        words = data['prediction'].astype(str).str.split().str.len()
+        rating = {'n': int(len(data)), 'empty': int((words == 0).sum()),
+                  'words_median': float(words.median()), 'words_max': int(words.max())}
+        dump(rating, get_intermediate_file_path(eval_file, '_rating', 'json'))
         return rating

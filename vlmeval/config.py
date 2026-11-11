@@ -1690,6 +1690,11 @@ qwen3_5_series.update({
 # W4A16 AWQ (compressed-tensors, group 32), language model only; same sampling as bf16.
 qwen3_5_series["Qwen3.5-4B-AWQ-NoThinking"] = partial(
     qwen3_5_series["Qwen3.5-4B-NoThinking"], model_path="cyankiwi/Qwen3.5-4B-AWQ-4bit")
+# descft (descriptions-only full FT, arms P and R): same sampling as the base no-think entry.
+for _arm in ["P", "R", "M", "L", "PnoU", "RnoU", "LnoU"]:
+    qwen3_5_series[f"qwen35_4b_descft_{_arm}_nothink"] = partial(
+        qwen3_5_series["Qwen3.5-4B-NoThinking"],
+        model_path=f"/leonardo_work/AIFAC_F02_1463/fcermell/descft/outputs/descft-{_arm}/merged_model_fixed")
 
 sail_series = {
     "SAIL-VL-2B": partial(vlm.SailVL, model_path="BytedanceDouyinContent/SAIL-VL-2B"),
