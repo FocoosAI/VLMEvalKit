@@ -5,6 +5,7 @@ usage: python vle_full.py run   MODEL OUTDIR SHARD NSHARDS DATASET [DATASET ...]
 
 Rows are sharded by source video (crc32), so two processes never convert the same clip.
 Each shard appends to OUTDIR/MODEL_DATASET.shardK.jsonl; `score` merges and runs evaluate().
+MVBench and MotionBench also get MODEL_DATASET_rescored_rating.json (rescore_rating.py).
 """
 import json
 import os
@@ -13,6 +14,7 @@ import time
 import zlib
 
 import pandas as pd
+from rescore_rating import rescore
 
 from vlmeval.dataset import HAIC, HAIC_Caption, MotionBench, MVBench
 
@@ -71,6 +73,8 @@ def score(model_name, out, nshards, dnames):
         f = os.path.join(out, f'{model_name}_{dname}.tsv')
         df.to_csv(f, sep='\t', index=False)
         print(f'{dname} rating: {ds.evaluate(f, model="exact_matching")}', flush=True)
+        if dname in ('MVBench_64frame', 'MotionBench'):
+            print(f'{dname} rescored rating: {rescore(f)[0]}', flush=True)
 
 
 if __name__ == '__main__':
